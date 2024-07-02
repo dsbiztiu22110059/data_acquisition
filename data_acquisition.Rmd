@@ -1,0 +1,58 @@
+---
+title: "Untitled"
+output: html_document
+date: "2024-06-21"
+---
+
+```{r}
+DB <- 'whether ensyu.duckdb'
+f.O <- 'whther ensyu.csv'
+
+site <- data.frame(
+  id = 47662,
+  name = 'Tokyo'
+)
+
+t.fr <- as.POSIXlt('2021-12-30')
+t.to <- as.POSIXlt('2021-01-01')
+ts   <- as.POSIXlt(seq(t.fr, t.to, by = 'days'))
+ts
+
+for (i in ts)
+{year <-1900+ts$year
+month <- 1+ts$mon
+day <-ts$mday
+Sys.sleep(runif(1, min = 1, max = 2))}
+
+url <- paste0('https://www.data.jma.go.jp/obd/stats/etrn/view/hourly_s1.php?prec_no44&block_no=', site$id,'&year=',year, '&month=', month, '&day=', day ,'&view=')
+cat('URL:',url,fill = T)
+url[1]
+
+library(rvest)
+for (i in 1:3){
+  read_html(url[i])|>html_table() -> tbl
+  d0 <- as.data.frame(tbl[[5]])
+}
+str(d0)
+
+hour <- d0[-1, '時']
+datetime <- as.POSIXlt(paste(ts,hour))
+
+d1 <- data.frame(site.id = as.integer(site$id),
+                 site&name,
+                 datetime = paste(datetime),
+                 temp = as.double(d0[-1,5]),
+                 wind = d0[-1,10])
+str(d1)
+
+library(duckdb)
+con <- dbConnect(duckdb("test.duckdb"), db)
+dbSendQuery(con,paste('DROP TABLE IF EXISTS', site$name))
+dbWriteTable(con, site$name, d1, append = T)
+res <- dbSendQuery(con, 'SELECT * FROM Tokyo')
+dbFetch(res)
+dbClearResult(res)
+dbDisconnect(con, shutdown = T)
+
+```
+
